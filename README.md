@@ -1,4 +1,4 @@
-# bodydat_measurement
+# bodyfat_measurement
 
 Presented by 19 Fall STAT628 Module Group8 Tuesday
 
@@ -9,7 +9,6 @@ Yijie Liu liu854@wisc.edu
 
 Bi Qing Teng bteng2@wisc.edu
 
-x
 ******
 
 This is a project about how to measure people's body fat. The measurement is based on a real data set of 252 men with measurements of their percentage of body fat and various body circumference measurements.
