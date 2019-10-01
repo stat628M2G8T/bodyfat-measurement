@@ -1,48 +1,50 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+# Documentation
+# This Shiny app acquires input values from the user to calculate BodyFat for a 
+# It contains two inputs. One is abdomen 2 circumference, the other is wrist circumference.
+# By using two inputs, it calculates Body Fat rate. The function takes two arguments, 
+# abdomen 2 circumference, the other is wrist circumference., and returns a numerical 
+# value based on a simple formula.
+# This is the front end file.
 
 library(shiny)
 
-# Define UI for application that draws a histogram
+# Define UI for application that caculates body fat
 ui <- fluidPage(
-
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
+  
+  # Application title
+  titlePanel("Body Fat Caculator"),
+  
+  # Sidebar with two numeric Input 
+  sidebarLayout(
+    sidebarPanel(
+      numericInput('in1', 'Enter your abdomen 2 circumference in cm', 90, min = 60, max = 130, step = 1),
+      numericInput('in2', 'Enter your wrist circumference in cm', 18, min = 10, max = 25, step = 0.1)
+    ),
+    
+    mainPanel(
+      h3('Results'),
+      h4('Your abdomen 2 circumference is:'),
+      verbatimTextOutput("ou1"),
+      h4('Your wrist circumference is:'),
+      verbatimTextOutput("ou2"),
+      h4('Your body fat is:'),
+      verbatimTextOutput("bodyfat"),
+      h6(em('Reactive output displayed as a result of server calculations.'))
     )
+  )
 )
 
-# Define server logic required to draw a histogram
+# The linear model we finally choose
+Bodyfat = function(in1,in2){
+  return(-0.825+(0.708*in1)-(2.118*in2))
+}
+
+
+#Define serve function
 server <- function(input, output) {
-
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
-    })
+  output$ou1 <- renderPrint({input$in1})
+  output$ou2 <- renderPrint({input$in2})
+  output$bodyfat <- renderPrint({Bodyfat(input$in1, input$in2)})
 }
 
 # Run the application 
