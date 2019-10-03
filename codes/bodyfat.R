@@ -1,29 +1,48 @@
 ### Import data
 rm(list = ls())
-bodyfat_dat = read.csv("data/bodyfat.csv", header = TRUE)
+bodyfat_dat = read.csv("bodyfat.csv", header = TRUE)
 str(bodyfat_dat)
 colnames(bodyfat_dat) = tolower(variable.names(bodyfat_dat))
 
 ### Remove IDNO variable
 bodyfat_dat = bodyfat_dat[,-1]
 
-## Find correlation
-a = cor(subset(bodyfat_dat, select = -bodyfat))
-a[lower.tri(a,diag=TRUE)]=NA  #Prepare to drop duplicates and meaningless information
-a=as.data.frame(as.table(a))  #Turn into a 3-column table
-a=na.omit(a)  #Get rid of the junk we flagged above
-a=a[order(-abs(a$Freq)),]    #Sort by highest correlation (whether +ve or -ve)
-a
-
-
 #######################################################################################
+### Data cleaning
+## first and last few observations 
+head(bodyfat_dat)
+tail(bodyfat_dat)
+
+## summary of data
+summary(bodyfat_dat)
+
+# Recover bodyfat for observations with extreme value of bodyfat using siri equation
+which.min(bodyfat_dat$bodyfat)    # 182
+495/bodyfat_dat$density[182]-450  # bodyfat = -3.611687
+which.max(bodyfat_dat$bodyfat)    # 216
+495/bodyfat_dat$density[216]-450  # bodyfat = 47.48744 - no misrecord
+
+# Recover height for observation with 29.5 inches recorded using BMI
+which.min(bodyfat_dat$height) # 42
+sqrt(bodyfat_dat$weight[42]/bodyfat_dat$adiposity[42]*703) # height = 69.4255 - misrecord
+
+# Recover weight for observation with 363.1 lbs recorded using BMI
+which.max(bodyfat_dat$weight) # 39
+bodyfat_dat$adiposity[39]*bodyfat_dat$height[39]^2/703 # 363.1 - no misrecord 
+
+# Recover adiposity for observation with 48.90 recorded using weight and height
+which.max(bodyfat_dat$adiposity) # 39
+bodyfat_dat$weight[39]/bodyfat_dat$height[39]^2*703  # 48.9 - no misrecord
+
+
+######
 ## Plot bodyfat vs 1/density
 plot( y = bodyfat_dat$bodyfat, x = 1/bodyfat_dat$density, ylab = "Bodyfat percentage",
       xlab = "1/density", main = "Bodyfat vs. 1/Density")
 ## Add labels to points
 text(1/bodyfat_dat$density, bodyfat_dat$bodyfat, labels=rownames(bodyfat_dat),
      cex=0.9, pos=3)
-## Indicate observations on plot that deviate from straight line
+## observations on plot that deviate from straight line
 bodyfat_dat[48,]
 bodyfat_dat[76,]
 bodyfat_dat[96,]
@@ -34,14 +53,6 @@ bodyfat_dat[182,]
 
 ### Remove density variable
 bodyfat_1 = bodyfat_dat[,-2]
-
-## Find correlation
-b = cor(subset(bodyfat_1, select = -bodyfat))
-b[lower.tri(b,diag=TRUE)]=NA  #Prepare to drop duplicates and meaningless information
-b=as.data.frame(as.table(b))  #Turn into a 3-column table
-b=na.omit(b)  #Get rid of NA
-b=b[order(-abs(b$Freq)),]
-b
 
 
 ### model fitting - MLR
@@ -55,39 +66,47 @@ abline(h = 4/(nrow(bodyfat_1)-ncol(bodyfat_1)), col='red', lty=2)
 bodyfat_1[c(39,42),] # obs 42 height = 29.50 inches
 # obs 39 weight = 363.15 pounds (outliers)
 bodyfat_1[86,] # obs 86 age = 67
-# Estimated height of obs 42 using BMI = 69.5 inches
 
 
-## MLR with obs 39, 42 removed
-fit2 = lm(bodyfat~., data = bodyfat_1[-c(39,42),])
+### Cleaned data set
+## Replace bodyfat for obs 48, 76 with Siri equation
+bodyfat_1$bodyfat[76] =  round(495/bodyfat_dat$density[76]-450,digits=1)
+bodyfat_1$bodyfat[48] =  round(495/bodyfat_dat$density[48]-450,digits=1)
+
+## Replace body density in bodyfat_dat for obs 96 with Siri equation
+bodyfat_dat$density[96] =  round(495/(450+bodyfat_dat$bodyfat[96]),digits=4)
+
+plot( y = bodyfat_1$bodyfat, x = (495/bodyfat_dat$density-450), 
+      ylab = "Bodyfat percentage", xlab = "1/density", 
+      main = "Bodyfat vs. 1/Density")                           # all points lie on straight line
+
+## Replace height of observation 42 with 69.4
+bodyfat_1$height[42] = 69.4
+## Remove observations 39, 182 and 216
+bodyfat_2 = bodyfat_1[-c(39,182,216),]
+rownames(bodyfat_2) = NULL
+summary(bodyfat_2)
+
+
+write.csv(bodyfat_2,file="bodyfat_cleaned.csv")
+###########################################################
+
+
+## MLR with new data set
+fit2 = lm(bodyfat~., data = bodyfat_2)
 summary(fit2)
 plot(fit2)
 plot(fit2, which = 4)
-abline(h = 4/(nrow(bodyfat_1)-ncol(bodyfat_1)), col='red', lty=2)
-bodyfat_1[c(41,86,221),]
-
-### Check for outliers
-library(car)
-outlierTest(fit2)  # obs 224 is a possible outlier
-bodyfat_1[224,]    # data looks normal
-
-### Remove observations 39, 42, 48, 76, 96, 182
-bodyfat_2 = bodyfat_1[-c(39,42,48,76,96,182),]
-rownames(bodyfat_2) = NULL
-
-
-## MLR with observations 39, 42, 48, 76, 96, 182 removed
-fit3 = lm(bodyfat~., data = bodyfat_2)
-summary(fit3)
-plot(fit3)
-plot(fit3, which = 4)
 abline(h = 4/(nrow(bodyfat_2)-ncol(bodyfat_2)), col='red', lty=2)
-outlierTest(fit3) # obs 218 in bodyfat_2 is a possible outlier
-bodyfat_2[218,]   # data looks normal
+bodyfat_2[c(85,95,218),]
+
+library("car")
+outlierTest(fit2) # obs 219 in bodyfat_2 is a possible outlier
+bodyfat_2[95,]   # data looks normal
 
 # Check distribution of residuals
-hist(fit3$residuals)
-plot(fit3$fitted.values,  rstandard(fit3))
+hist(fit2$residuals)
+plot(fit2$fitted.values,  rstandard(fit2))
 
 ### Plotting
 ## Box plots for variables
@@ -118,64 +137,59 @@ boxcox_trans <- boxcox(bodyfat ~ ., data=bodyfat_2) # lambda ~ 1
 
 ##########################################################################################################
 ###Variable selection
-## Split bodyfat_2 into train and test sets
-set.seed(1)
-train = sample(nrow(bodyfat_2), 0.7*nrow(bodyfat_2), replace = FALSE)
-bodyfat_train = bodyfat_2[train,]
-bodyfat_test = bodyfat_2[-train,]
-
-
 ## Full model
-# weight, adiposity, abdomen and wrist are significant
-full.model = lm(bodyfat~., data = bodyfat_train)
+# age, abdomen and wrist are significant
+full.model = lm(bodyfat~., data = bodyfat_2)
 summary(full.model)
 
 
 ## forward and backward selection
-# (BIC=490.96) model: bodyfat ~ weight + abdomen + wrist
-model.bic.both = step(full.model, direction = "both", k = log(nrow(bodyfat_train)))
+# (BIC=705.13) model: bodyfat ~ abdomen + wrist + height
+model.bic.both = step(full.model, direction = "both", k = log(nrow(bodyfat_2)))
 summary(model.bic.both)  # all variables are significant
 
-# (AIC=476.49) model: bodyfat ~ weight + height + adiposity + abdomen + biceps + wrist
+# (AIC=686.5) model: bodyfat ~ age + adiposity + neck + chest + abdomen + hip + forearm + 
+#                               wrist
 model.aic.both = step(full.model, direction = "both", k = 2)
-summary(model.aic.both) # all variables except biceps are significant
+summary(model.aic.both) # age, adiposity, chest, abdomen, wrist
 
 
 ## backward selection
-# (BIC=490.96) model: bodyfat ~ weight + abdomen + wrist
-model.bic.backward = step(full.model, direction = "backward", k = log(nrow(bodyfat_train)))
+# (BIC=705.81) model: bodyfat ~ age + abdomen + wrist
+model.bic.backward = step(full.model, direction = "backward", k = log(nrow(bodyfat_2)))
 summary(model.bic.backward)  # all are significant
 
-# (AIC=476.49) model: bodyfat ~ weight + height + adiposity + abdomen + biceps + wrist
+# (AIC=686.5) model: bodyfat ~ age + adiposity + neck + chest + abdomen + hip + forearm + 
+#                              wrist
 model.aic.backward= step(full.model, direction = "backward", k = 2)
-summary(model.aic.backward)  # all except biceps are significant
+summary(model.aic.backward)  # age, adiposity, chest, abdomen, wrist
 
 
 ## forward selection
-# (BIC=533.29) model: bodyfat ~ age + weight + height + adiposity + neck + chest +
+# (BIC=747.02) model: bodyfat ~ age + weight + height + adiposity + neck + chest +
 #                     abdomen + hip + thigh + knee + ankle + biceps + forearm +
 #                     wrist
-model.bic.forward = step(full.model, direction = "forward", k = log(nrow(bodyfat_train)))
-summary(model.bic.forward)  # weight, adiposity, abdomen and wrist are significant
+model.bic.forward = step(full.model, direction = "forward", k = log(nrow(bodyfat_2)))
+summary(model.bic.forward)  # age, abdomen and wrist are significant
 
-# (AIC=688.37) model: bodyfat ~ age + weight + height + adiposity + neck + chest +
+# (AIC=694.26) model: bodyfat ~ age + weight + height + adiposity + neck + chest +
 #                     abdomen + hip + thigh + knee + ankle + biceps + forearm +
 #                     wrist
 model.aic.forward = step(full.model, direction = "forward", k = 2)
-summary(model.aic.forward)  # weight, adiposity, abdomen and wrist are significant
+summary(model.aic.forward)  # age, abdomen, wrist are significant
 
 
 ## best subset selection
 library(leaps)
-bestsubset = regsubsets(bodyfat~., data=bodyfat_train, nvmax=ncol((bodyfat_train)-1))
+bestsubset = regsubsets(bodyfat~., data=bodyfat_2, nvmax=ncol((bodyfat_2)-1))
 summary.bestsubset = summary(bestsubset)
 names(summary.bestsubset)
 which.min(summary.bestsubset$bic)   # 3
-which.max(summary.bestsubset$adjr2)
-summary.bestsubset$adjr2            # 3 variables = 0.6870708
-# 8 variables = 0.6972099
+which.max(summary.bestsubset$adjr2) # 10
+summary.bestsubset$adjr2            # 3 variables = 0.7162520
+                                    # 10 variables = 0.7261865 
 # best subset with 3 variables: weight, abdomen, wrist
-model.bestsubset = lm(bodyfat~weight+abdomen+wrist, data=bodyfat_train)
+model.bestsubset = lm(bodyfat~weight+abdomen+wrist, data=bodyfat_2)
 summary(model.bestsubset) # all variables are significant
 
 
@@ -186,9 +200,9 @@ y = bodyfat_2$bodyfat
 model.cv.lasso = cv.glmnet(x, y, family = "gaussian", alpha = 1, type.measure = "mse")
 par(mfrow=c(1,1))
 plot(model.cv.lasso)
-print(model.cv.lasso$lambda.min) # lambda = 0.1509559
-print(model.cv.lasso$lambda.1se) # lambda = 0.4609976
-print(coef(model.cv.lasso, s = "lambda.min")) # variables = age,height,neck,abdomen,wrist
+print(model.cv.lasso$lambda.min) # lambda = 0.04361805
+print(model.cv.lasso$lambda.1se) # lambda = 0.3706459
+print(coef(model.cv.lasso, s = "lambda.min")) # all variables except weight, adiposity, knee
 print(coef(model.cv.lasso, s = "lambda.1se")) # variables = age,height,abdomen,wrist
 
 
@@ -196,123 +210,12 @@ print(coef(model.cv.lasso, s = "lambda.1se")) # variables = age,height,abdomen,w
 library(faraway)
 mallow_Cp = leaps(x,y,nbest = 1)
 Cpplot(mallow_Cp)
-which.min(mallow_Cp$Cp)# 6 variables
-min(mallow_Cp$Cp)      # best: variables = 1,3,6,7,12,14
+# best: variables = 1,3,6,7,12,14
 variable.names(x)[c(1,3,6,7,12,14)] # age, height, chest, abdomen, biceps, wrist
 
 # fit MLR with the variables
-model.mallowCp = lm(bodyfat~age+height+chest+abdomen+biceps+wrist, data=bodyfat_train)
-summary(model.mallowCp)
-
-##########################################################################################################
-# create dataset with log-transformed variables
-bodyfat_3 = bodyfat_2
-bodyfat_3$adiposity = log(bodyfat_3$adiposity)
-colnames(bodyfat_3)[5] = "log_adiposity"
-bodyfat_3$ankle = log(bodyfat_3$ankle)
-colnames(bodyfat_3)[12] = "log_ankle"
-
-
-##########################################################################################################
-### Plot bodyfat vs each variable
-## variables height, age and ankle do not exhibit linear relationships
-par(mfrow=c(2,2))
-for(i in 1:14){
-  plot(bodyfat_3$bodyfat~bodyfat_3[,(i+1)],ylab="Bodyfat percentage",
-       xlab=variable.names(bodyfat_3)[i+1])
-}
-
-## Consider Boxcox Transformation
-library(MASS)
-boxcox_trans <- boxcox(bodyfat ~ ., data=bodyfat_3) # lambda ~ 1
-
-
-##########################################################################################################
-###Variable selection
-## Split bodyfat_3 into train and test sets
-set.seed(1)
-train = sample(nrow(bodyfat_3), 0.7*nrow(bodyfat_3), replace = FALSE)
-bodyfat_log_train = bodyfat_3[train,]
-bodyfat_log_test = bodyfat_3[-train,]
-
-
-## Full model
-# weight, adiposity, abdomen and wrist are significant
-full.model.trans = lm(bodyfat~., data = bodyfat_log_train)
-summary(full.model.trans)
-
-
-## forward and backward selection
-# (BIC=490.29) model: bodyfat ~ weight + height + log_adiposity + abdomen + wrist
-model.bic.both.trans = step(full.model.trans, direction = "both", k = log(nrow(bodyfat_log_train)))
-summary(model.bic.both.trans)  # all variables are significant
-
-# (AIC=471.41) model: weight + height + log_adiposity + abdomen + wrist
-model.aic.both.trans = step(full.model.trans, direction = "both", k = 2)
-summary(model.aic.both.trans) # all variables are significant
-
-
-## backward selection
-# (BIC=490.29) model: bodyfat ~ weight + height + log_adiposity + abdomen + wrist
-model.bic.backward.trans = step(full.model.trans, direction = "backward", k = log(nrow(bodyfat_log_train)))
-summary(model.bic.backward.trans)  # all are significant
-
-# (AIC=471.41) model: bodyfat ~ age + weight + height + adiposity + neck + chest +
-#                     abdomen + hip + thigh + knee + ankle + biceps + forearm +
-#                     wrist
-model.aic.backward.trans = step(full.model.trans, direction = "backward", k = 2)
-summary(model.aic.backward.trans)  # weight, height, log_adiposity, abdomen and wrist are significant
-
-
-## forward selection
-# (BIC=530.61) model: bodyfat ~ age + weight + height + adiposity + neck + chest +
-#                     abdomen + hip + thigh + knee + ankle + biceps + forearm +
-#                     wrist
-model.bic.forward.trans = step(full.model.trans, direction = "forward", k = log(nrow(bodyfat_log_train)))
-summary(model.bic.forward.trans)  # weight, height, log_adiposity, abdomen and wrist are significant
-
-# (AIC=483.39) model: bodyfat ~ age + weight + height + adiposity + neck + chest +
-#                     abdomen + hip + thigh + knee + ankle + biceps + forearm +
-#                     wrist
-model.aic.forward.trans = step(full.model.trans, direction = "forward", k = 2)
-summary(model.aic.forward.trans)  # weight, height, log_adiposity, abdomen and wrist are significant
-
-
-## best subset selection
-library(leaps)
-model.bestsubset.trans = regsubsets(bodyfat~., data=bodyfat_log_train, nvmax=ncol((bodyfat_log_train)-1))
-summary.bestsubset.trans = summary(model.bestsubset.trans)
-names(summary.bestsubset.trans)
-which.min(summary.bestsubset.trans$bic)   # 5
-which.max(summary.bestsubset.trans$adjr2) # 5
-
-# best subset with 5 variables: weight, height, log_adiposity, abdomen, wrist
-bestsubset.model = lm(bodyfat~weight+height+log_adiposity+abdomen+wrist, data=bodyfat_log_train)
-summary(bestsubset.model) # all variables are significant
-
-
-## Fit lasso
-library(glmnet)
-x = model.matrix(bodyfat~., data = bodyfat_3)[,-1]
-y = bodyfat_3$bodyfat
-model.cv.lasso.trans = cv.glmnet(x, y, family = "gaussian", alpha = 1, type.measure = "mse")
-par(mfrow=c(1,1))
-plot(model.cv.lasso.trans)
-print(model.cv.lasso.trans$lambda.min) # lambda = 0.1995549
-print(model.cv.lasso.trans$lambda.1se) # lambda = 0.5059443
-print(coef(model.cv.lasso.trans, s = "lambda.min")) # variables = age,height,neck,abdomen,wrist
-print(coef(model.cv.lasso.trans, s = "lambda.1se")) # variables = age,height,abdomen,wrist
-
-
-## Using Mallow's Cp criterion
-library(faraway)
-mallow_Cp.trans = leaps(x,y,nbest = 1)
-Cpplot(mallow_Cp.trans) # best: variables = 1,4,6,7,8,14
-variable.names(x)[c(1,4,6,7,8,14)] # age, log_adiposity, chest, abdomen,hip, wrist
-
-# fit MLR with the variables
-model.mallowCp.trans = lm(bodyfat~age+log_adiposity+chest+abdomen+hip+wrist, data=bodyfat_log_train)
-summary(model.mallowCp.trans)
+model.mallowCp = lm(bodyfat~age+height+chest+abdomen+biceps+wrist, data=bodyfat_2)
+summary(model.mallowCp)   # age,height,chest,abdomen and wrist are significant
 
 
 ##########################################################################################################
