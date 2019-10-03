@@ -17,17 +17,18 @@ ui <- fluidPage(
   # Sidebar with two numeric Input 
   sidebarLayout(
     sidebarPanel(
-      numericInput('in1', 'Enter your abdomen 2 circumference in cm', 90, min = 60, max = 130, step = 1),
+      numericInput('in1', 'Enter your abdomen 2 circumference in cm', 90, min = 60, max = 130, step = 0.1),
       numericInput('in2', 'Enter your wrist circumference in cm', 18, min = 10, max = 25, step = 0.1)
     ),
     
     mainPanel(
+      h4(tableOutput("table")),
       h3('Results'),
       h4('Your abdomen 2 circumference is:'),
       verbatimTextOutput("ou1"),
       h4('Your wrist circumference is:'),
       verbatimTextOutput("ou2"),
-      h4('Your body fat is:'),
+      h4('Your body fat percentage is:'),
       verbatimTextOutput("bodyfat"),
       h6(em('Reactive output displayed as a result of server calculations.'))
     )
@@ -45,6 +46,11 @@ server <- function(input, output) {
   output$ou1 <- renderPrint({input$in1})
   output$ou2 <- renderPrint({input$in2})
   output$bodyfat <- renderPrint({Bodyfat(input$in1, input$in2)})
+  Description = c("Essential fat", "Athletes", "Fitness", "Average", "Obese")
+  Men = c("2-5%","6-13%","14-17%","18-24%","25%+")
+  Women = c("10-13%","14-20%","21-24%","25-31%","32%+")
+  table1 = data.frame(Description=Description,Men=Men,Women=Women)
+  output$table <-renderTable({table1}) 
 }
 
 # Run the application 
