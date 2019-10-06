@@ -16,7 +16,7 @@ This is a project about how to measure people's body fat. The measurement is bas
 #### Codes folder:
 "bodyfat.R" contains the codes for data cleaning, variable selection and model analysis. "bodyfatcalculator" folder contains a shiny app that calculates body fat percentage based on abdomen and wrist.
 
-#### Image folder:
+#### Pic folder:
 Contains the images that we produced during our analysis on body fat percentage meassurement.
 
 #### Data folder:
