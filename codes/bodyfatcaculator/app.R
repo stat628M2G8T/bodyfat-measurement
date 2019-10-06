@@ -22,7 +22,9 @@ ui <- fluidPage(
     ),
     
     mainPanel(
-      h4(tableOutput("table")),
+      h4(tabsetPanel(type = "tabs",
+                     tabPanel("Men", tableOutput("table1")),
+                     tabPanel("Women", tableOutput("table2")))),
       h3('Results'),
       h4('Your abdomen 2 circumference is:'),
       verbatimTextOutput("ou1"),
@@ -39,6 +41,43 @@ ui <- fluidPage(
 Bodyfat = function(in1,in2){
   return(-0.825+(0.708*in1)-(2.118*in2))
 }
+war = function(in1,in2){
+  bf = -0.825+(0.708*in1)-(2.118*in2)
+  temp1 = rep("",5)
+  temp2 = rep("",5)
+  if(bf<2){
+    temp1[1]="Wrong Input"
+  }else if(bf<6){
+    temp1[1]=as.character(bf)
+  }else if(bf<14){
+    temp1[2]=as.character(bf)
+  }else if(bf<18){
+    temp1[3]=as.character(bf)
+  }else if(bf<25){
+    temp1[4]=as.character(bf)
+  }else if(bf<40){
+    temp1[5]=as.character(bf)
+  }else{
+    temp1[5]="Wrong Input"
+  }
+  if(bf<10){
+    temp2[1]="Wrong Input"
+  }else if(bf<14){
+    temp2[1]=as.character(bf)
+  }else if(bf<21){
+    temp2[2]=as.character(bf)
+  }else if(bf<25){
+    temp2[3]=as.character(bf)
+  }else if(bf<32){
+    temp2[4]=as.character(bf)
+  }else if(bf<40){
+    temp2[5]=as.character(bf)
+  }else{
+    temp2[5]="Wrong Input"
+  }    
+  return(data.frame(temp1=temp1,temp2=temp2))
+}
+
 
 
 #Define serve function
@@ -49,8 +88,9 @@ server <- function(input, output) {
   Description = c("Essential fat", "Athletes", "Fitness", "Average", "Obese")
   Men = c("2-5%","6-13%","14-17%","18-24%","25%+")
   Women = c("10-13%","14-20%","21-24%","25-31%","32%+")
-  table1 = data.frame(Description=Description,Men=Men,Women=Women)
-  output$table <-renderTable({table1}) 
+  #table1 = data.frame(Description=Description,Men=Men,Out=temp)
+  output$table1 <-renderTable({data.frame(Description=Description,Men=Men,Out=war(input$in1, input$in2)$temp1)}) 
+  output$table2 <-renderTable({data.frame(Description=Description,Women=Women,Out=war(input$in1, input$in2)$temp2)})
 }
 
 # Run the application 
