@@ -25,6 +25,7 @@ ui <- fluidPage(
       h4(tabsetPanel(type = "tabs",
                      tabPanel("Men", tableOutput("table1")),
                      tabPanel("Women", tableOutput("table2")))),
+      h6(em('https://www.builtlean.com/2010/08/03/ideal-body-fat-percentage-chart/')),
       h3('Results'),
       h4('Your abdomen 2 circumference is:'),
       verbatimTextOutput("ou1"),
@@ -39,10 +40,10 @@ ui <- fluidPage(
 
 # The linear model we finally choose
 Bodyfat = function(in1,in2){
-  return(-0.825+(0.708*in1)-(2.118*in2))
+  return(-10.0553204695359+(0.718707203647659*in1)-(2.05356376175185*in2))
 }
 war = function(in1,in2){
-  bf = -0.825+(0.708*in1)-(2.118*in2)
+  bf = -10.0553204695359+(0.718707203647659*in1)-(2.05356376175185*in2)
   temp1 = rep("",5)
   temp2 = rep("",5)
   if(bf<2){
