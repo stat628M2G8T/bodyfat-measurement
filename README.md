@@ -1,6 +1,6 @@
 # bodyfat_measurement
 
-Presented by 19 Fall STAT628 Module Group8 Tuesday
+Presented by 2019 Fall STAT628 Module Group8 Tuesday
 
 ### Group members:
 Xiaoxiang Hua xhua24@wisc.edu
