@@ -18,6 +18,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       numericInput('in1', 'Enter your abdomen 2 circumference in cm', 90, min = 60, max = 130, step = 0.1),
+      h6("The abdomen 2 circumference is measured 'laterally, at the level of the iliac crests, and anteriorly, at the umbilicus.'"),
       numericInput('in2', 'Enter your wrist circumference in cm', 18, min = 10, max = 25, step = 0.1)
     ),
     
@@ -33,7 +34,8 @@ ui <- fluidPage(
       verbatimTextOutput("ou2"),
       h4('Your body fat percentage is:'),
       verbatimTextOutput("bodyfat"),
-      h6(em('Reactive output displayed as a result of server calculations.'))
+      h6('If you have any questions please contact:'),
+      h6('xhua24@wisc.edu; liu854@wisc.edu;bteng2@wisc.edu')
     )
   )
 )
