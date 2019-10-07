@@ -11,7 +11,7 @@ Bi Qing Teng bteng2@wisc.edu
 
 ******
 
-This is a project about how to predict people's body fat. The measurement is based on a real data set of 252 men with their percentage of body fat and various body circumference measurements. The percentage of body fat can be calculated using body density but the measurement of body density is cumbersome and difficult. Our goal is to find a simple, robust, accurate and precise “rule-of-thumb” method to predict percentage of Body Fat. 
+This is a project about how to predict people's body fat. The measurement is based on a real data set of 252 men with their percentage of body fat and various body circumference measurements. The percentage of body fat can be calculated using body density but the measurement of body density is cumbersome and difficult. Our goal is to find a simple, robust, accurate and precise “rule-of-thumb” method to predict the percentage of body fat. 
 
 #### Codes folder:
 "bodyfat.R" contains the codes for data cleaning, variable selection and model analysis. "bodyfatcalculator" folder contains a shiny app that calculates body fat percentage based on abdomen and wrist.
