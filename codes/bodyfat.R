@@ -218,7 +218,18 @@ summary(model1_3)
 model1_4 = lm(bodyfat ~ weight + height + adiposity + abdomen + biceps + wrist , data = bodyfat_cleaned)
 summary(model1_4)
 
-### Logistic transformation
+
+### Models using a combination of abdomen and wrist variables
+model0_1 = lm(bodyfat ~ abdomen , data = bodyfat_cleaned)
+summary(model0_1)
+model0_2 = lm(bodyfat ~ wrist , data = bodyfat_cleaned)
+summary(model0_2)
+model1_0 = lm(bodyfat ~ abdomen + wrist, data = bodyfat_cleaned)
+summary(model1_0)
+par(mfrow = c(2,2))
+
+
+### Logistic transformation on adiposity and ankle
 bodyfat_log = as.data.frame(cbind(subset(bodyfat_cleaned,select = -c(5,12)),log(bodyfat_cleaned$adiposity),
                                   log(bodyfat_cleaned$ankle)))
 colnames(bodyfat_log)[14] = "log_adiposity"
@@ -232,11 +243,12 @@ for(i in 1:2){
        xlab=variable.names(bodyfat_log)[i+13])
 }
 
-### Models
-### FB + BIC :  model: bodyfat ~ weight + height + log_adiposity + abdomen + wrist
-### FB + AIC :  model: bodyfat ~ weight + height + log_adiposity + abdomen + wrist
-### B  + BIC :  model: bodyfat ~ weight + height + log_adiposity + abdomen + wrist
-### B  + AIC :  model: bodyfat ~ age + weight + height + adiposity + neck + chest +
+### Models for logistic transformation on adiposity and ankle using variables selected
+### by stepwise, backward and forward selection, best subset, lasso and mallow cp's
+## FB + BIC :  model: bodyfat ~ weight + height + log_adiposity + abdomen + wrist
+## FB + AIC :  model: bodyfat ~ weight + height + log_adiposity + abdomen + wrist
+## B  + BIC :  model: bodyfat ~ weight + height + log_adiposity + abdomen + wrist
+## B  + AIC :  model: bodyfat ~ age + weight + height + adiposity + neck + chest +
 #                     abdomen + hip + thigh + knee + ankle + biceps + forearm +
 #                     wrist
 ### F  + BIC : bodyfat ~ age + weight + height + adiposity + neck + chest +
@@ -257,16 +269,7 @@ model2_2 = lm(bodyfat ~ chest + age + log_adiposity + abdomen + hip + wrist, dat
 summary(model2_2)
 
 
-model0_1 = lm(bodyfat ~ abdomen , data = bodyfat_cleaned)
-summary(model0_1)
-model0_2 = lm(bodyfat ~ wrist , data = bodyfat_cleaned)
-summary(model0_2)
-model1_0 = lm(bodyfat ~ abdomen + wrist, data = bodyfat_cleaned)
-summary(model1_0)
-par(mfrow = c(2,2))
-
-### Check the diagnostic plot
-
+### Model diagnostics
 plot(model0_1) # bodyfat ~ abdomen
 plot(model0_2) # bodyfat ~ wrist
 plot(model1_0) # bodyfat ~ abdomen + wrist
