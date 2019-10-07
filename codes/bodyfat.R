@@ -318,5 +318,5 @@ vif(model1_1)
 vif(model1_0)
 
 ## Strength & Weakness
-# P: only 3 features, easily explained
+# P: model contains only 2 features, easily explained
 # C: VIF become large, exist collinearity
